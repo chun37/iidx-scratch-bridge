@@ -1,0 +1,56 @@
+# iidx-scratch-bridge sample config.
+#
+# Copy this file to config.toml and edit values to match your hardware.
+# Use the --dump flag once to inspect raw HID reports and find the
+# correct byte offsets for your controller variant.
+
+[device]
+# Konami IIDX entry model (BeatStream/INFINITAS controller). Change
+# these to match `lsusb`/Device Manager output for your unit.
+vid = 0x1ccf
+pid = 0x8048
+
+# Byte offset of the scratch wheel position inside the Input Report.
+# Discover with `scratch-bridge --dump` and rotate the wheel slowly to
+# see which byte changes.
+scratch_axis_byte_index = 5
+
+# Half-open [start, end) range of bytes holding the button bitmap.
+# Max width is 2 bytes (16 buttons).
+buttons_byte_range = [2, 4]
+
+# Optional. Set to a non-zero value if your device uses HID Report IDs
+# and you need to filter on one. Leave 0 otherwise.
+report_id = 0
+
+[scratch]
+# Minimum accumulated delta on the scratch axis before we emit a pulse.
+# Smaller = more sensitive. The detector accumulates sub-threshold
+# motion so slow rotations still register.
+threshold = 2
+
+# Length of each scratch pulse, in milliseconds. Stock PS2 controllers
+# fire an ~133 ms one-shot per wheel motion; matches IIDX 14 GOLD timing.
+pulse_duration_ms = 133
+
+# Keys sent for the two scratch directions. Set these in PCSX2 as IIDX
+# scratch Up / Down (typically the d-pad).
+up_key   = "UP"
+down_key = "DOWN"
+
+[buttons]
+# Bit position inside the bitmap -> key name.
+# Adjust the bit-to-button mapping for your hardware after using --dump.
+# Names accepted: A-Z, 0-9, F1-F24, plus ENTER/BACKSPACE/SPACE/TAB/
+# ESC/SHIFT/CTRL/ALT/UP/DOWN/LEFT/RIGHT/HOME/END/PAGEUP/PAGEDOWN/
+# INSERT/DELETE.
+b0 = "Z"        # 1鍵
+b1 = "S"        # 2鍵
+b2 = "X"        # 3鍵
+b3 = "D"        # 4鍵
+b4 = "C"        # 5鍵
+b5 = "F"        # 6鍵
+b6 = "V"        # 7鍵
+b7 = "ENTER"     # START
+b8 = "BACKSPACE" # SELECT
+# b9-b15 are free for E1/E2/etc. if your unit exposes them.

@@ -1,0 +1,13 @@
+# build artifacts
+/scratch-bridge
+/scratch-bridge.exe
+/dist/
+/bin/
+
+# local config (not the example)
+/config.toml
+
+# editor / OS
+.idea/
+.vscode/
+.DS_Store

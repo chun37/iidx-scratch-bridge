@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Build (windows/amd64, CGo enabled)
+        shell: bash
+        env:
+          CGO_ENABLED: "1"
+          GOOS: windows
+          GOARCH: amd64
+        run: |
+          mkdir -p dist
+          version="${GITHUB_REF_NAME}"
+          go build -trimpath -ldflags "-s -w -X main.version=${version}" \
+            -o dist/scratch-bridge.exe ./cmd/scratch-bridge
+
+      - name: Stage release assets
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME}"
+          cp config.example.toml dist/
+          cp README.md dist/
+          cp LICENSE dist/
+          (cd dist && 7z a -tzip "iidx-scratch-bridge_${version}_windows_amd64.zip" \
+              scratch-bridge.exe config.example.toml README.md LICENSE)
+          (cd dist && sha256sum *.zip scratch-bridge.exe > checksums.txt)
+          ls -la dist
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.zip
+            dist/scratch-bridge.exe
+            dist/checksums.txt

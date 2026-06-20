@@ -39,16 +39,32 @@ validation. See `iidx-scratch-bridge-design.md` for the full design.
 
 ## Install
 
-Grab the latest `scratch-bridge.exe` from the
-[Releases](../../releases) page. Copy `config.example.toml` next to it
-as `config.toml`.
+Download the latest
+`iidx-scratch-bridge_<version>_windows_amd64.zip` from the
+[Releases](../../releases) page and unzip everything into one folder.
+The archive contains:
+
+| File | What it does |
+|------|--------------|
+| `scratch-bridge.exe` | the bridge itself |
+| `start.bat` | double-click to run with `config.toml` |
+| `list-devices.bat` | double-click to list every HID device |
+| `dump.bat` | double-click to print raw reports for offset discovery |
+| `config.example.toml` | copy to `config.toml` and edit |
+| `README.md` / `LICENSE` | docs |
+
+Copy `config.example.toml` to `config.toml` in the same folder before
+launching anything.
 
 ## First-time setup
 
-The probing flow is `--list` → fill VID/PID → `--dump` → fill offsets →
-run for real.
+The probing flow is `list-devices.bat` → fill VID/PID → `dump.bat` →
+fill offsets → `start.bat`. (Or run `scratch-bridge.exe` with the same
+flags from a Command Prompt if you prefer.)
 
 ### 1. Find your VID/PID
+
+Double-click `list-devices.bat`, or:
 
 ```
 scratch-bridge.exe --list
@@ -65,6 +81,8 @@ Copy the matching hex VID/PID into `[device]` in `config.toml`. Leave
 now — they only matter for the real run.
 
 ### 2. Find the byte offsets
+
+Double-click `dump.bat`, or:
 
 ```
 scratch-bridge.exe --config config.toml --dump
@@ -87,6 +105,8 @@ report len=8 00 00 12 34 00 AB 00 00
 Update `config.toml` with the offsets and the button-to-key mapping.
 
 ### 3. Run it
+
+Double-click `start.bat`, or:
 
 ```
 scratch-bridge.exe --config config.toml

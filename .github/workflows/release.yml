@@ -37,8 +37,11 @@ jobs:
           cp config.example.toml dist/
           cp README.md dist/
           cp LICENSE dist/
+          cp start.bat list-devices.bat dump.bat dist/
           (cd dist && 7z a -tzip "iidx-scratch-bridge_${version}_windows_amd64.zip" \
-              scratch-bridge.exe config.example.toml README.md LICENSE)
+              scratch-bridge.exe \
+              start.bat list-devices.bat dump.bat \
+              config.example.toml README.md LICENSE)
           (cd dist && sha256sum *.zip scratch-bridge.exe > checksums.txt)
           ls -la dist
 

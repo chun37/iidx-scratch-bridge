@@ -1,0 +1,7 @@
+# Force CRLF for Windows batch files so they keep working when checked
+# out on any OS. Without this, a Linux clone would write LF endings and
+# cmd.exe would mishandle multi-line scripts.
+*.bat text eol=crlf
+
+# Everything else: let Git pick text vs binary as usual.
+* text=auto

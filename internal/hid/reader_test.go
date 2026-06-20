@@ -1,6 +1,50 @@
 package hid
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/bearsh/hid"
+)
+
+func TestPickGameCollectionPrefersJoystick(t *testing.T) {
+	vendor := hid.DeviceInfo{UsagePage: 0xFF00, Usage: 0x01, Interface: 0, Product: "Entry Model"}
+	joystick := hid.DeviceInfo{UsagePage: 0x01, Usage: 0x04, Interface: 0, Product: ""}
+	// Vendor-specific collection appears first in the list (as observed
+	// on Windows hidapi in some hot-plug orders). The picker must still
+	// pull the Joystick collection.
+	got := pickGameCollection([]hid.DeviceInfo{vendor, joystick})
+	if got.UsagePage != 0x01 || got.Usage != 0x04 {
+		t.Fatalf("got %+v, want Joystick collection", got)
+	}
+}
+
+func TestPickGameCollectionPrefersGamepad(t *testing.T) {
+	gamepad := hid.DeviceInfo{UsagePage: 0x01, Usage: 0x05, Interface: 0}
+	vendor := hid.DeviceInfo{UsagePage: 0xFF00, Usage: 0x01, Interface: 0}
+	got := pickGameCollection([]hid.DeviceInfo{vendor, gamepad})
+	if got.UsagePage != 0x01 || got.Usage != 0x05 {
+		t.Fatalf("got %+v, want Gamepad collection", got)
+	}
+}
+
+func TestPickGameCollectionFallsBackToLowestInterface(t *testing.T) {
+	// No Generic Desktop joystick/gamepad at all -- pick the lowest
+	// interface number as a sane default.
+	a := hid.DeviceInfo{UsagePage: 0xFF00, Usage: 0x01, Interface: 1}
+	b := hid.DeviceInfo{UsagePage: 0xFF00, Usage: 0x02, Interface: 0}
+	got := pickGameCollection([]hid.DeviceInfo{a, b})
+	if got.Interface != 0 {
+		t.Fatalf("got iface=%d, want 0", got.Interface)
+	}
+}
+
+func TestPickGameCollectionSingleEntry(t *testing.T) {
+	only := hid.DeviceInfo{UsagePage: 0x01, Usage: 0x04, Interface: 0}
+	got := pickGameCollection([]hid.DeviceInfo{only})
+	if got != only {
+		t.Fatalf("single-entry picker returned a different value: %+v", got)
+	}
+}
 
 func TestParserBasic(t *testing.T) {
 	p := Parser{ScratchIdx: 5, BtnStart: 2, BtnEnd: 4}

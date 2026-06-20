@@ -13,5 +13,12 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
-      - run: go vet ./...
-      - run: go test ./...
+      # The HID layer uses bearsh/hid which links against hidapi+libudev
+      # when CGo is on. Unit tests don't touch real hardware, so we
+      # disable CGo and let bearsh/hid fall back to its no-op stub.
+      - env:
+          CGO_ENABLED: "0"
+        run: go vet ./...
+      - env:
+          CGO_ENABLED: "0"
+        run: go test ./...

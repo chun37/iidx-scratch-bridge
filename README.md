@@ -40,24 +40,57 @@ validation. See `iidx-scratch-bridge-design.md` for the full design.
 ## Install
 
 Grab the latest `scratch-bridge.exe` from the
-[Releases](../../releases) page.
+[Releases](../../releases) page. Copy `config.example.toml` next to it
+as `config.toml`.
 
-Copy `config.example.toml` to `config.toml` next to the executable and
-edit the device / button mapping. Run from a Command Prompt:
+## First-time setup
+
+The probing flow is `--list` → fill VID/PID → `--dump` → fill offsets →
+run for real.
+
+### 1. Find your VID/PID
 
 ```
-scratch-bridge.exe --config config.toml
+scratch-bridge.exe --list
 ```
 
-To find the right `scratch_axis_byte_index` and `buttons_byte_range`
-for your unit, run with `--dump` and exercise each input:
+Lists every HID device on the system as
+
+```
+VID=0x1ccf PID=0x8048 iface=0  KONAMI / IIDX entry model  serial=...
+```
+
+Copy the matching hex VID/PID into `[device]` in `config.toml`. Leave
+`scratch_axis_byte_index` and `buttons_byte_range` at the defaults for
+now — they only matter for the real run.
+
+### 2. Find the byte offsets
 
 ```
 scratch-bridge.exe --config config.toml --dump
 ```
 
-Each line shows the raw axis byte and packed button bitmap. Spin the
-wheel to find the axis byte; tap each key to map the bits.
+`--dump` prints each Input Report as raw hex regardless of the
+`[device]` offsets, so you don't need to know them yet:
+
+```
+report len=8 00 00 12 34 00 AB 00 00
+```
+
+- Spin the wheel slowly. The byte that changes monotonically (wrapping
+  0..255) is `scratch_axis_byte_index`.
+- Tap each button. The byte(s) that flip bits are `buttons_byte_range`
+  (a half-open range `[start, end)`).
+- Tap each of the 7 keys plus START/SELECT and note the bit position.
+  That bit index goes into `[buttons]` as `b<n>`.
+
+Update `config.toml` with the offsets and the button-to-key mapping.
+
+### 3. Run it
+
+```
+scratch-bridge.exe --config config.toml
+```
 
 ## PCSX2 setup
 

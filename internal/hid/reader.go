@@ -67,6 +67,12 @@ type Reader struct {
 	PID      uint16
 	Parser   Parser
 	OnReport func(InputReport)
+	// OnRawReport, if set, is invoked for every received Input Report
+	// *before* the Parser runs and regardless of whether parsing would
+	// succeed. The slice is only valid until OnRawReport returns; copy
+	// if you need to retain it. Used by --dump mode so the user can
+	// discover the right offsets without already knowing them.
+	OnRawReport func([]byte)
 	// OnReconnect, if set, is called whenever the device is (re)opened.
 	// Use this to reset any stateful detectors.
 	OnReconnect func()
@@ -138,10 +144,15 @@ func (r *Reader) runOnce(ctx context.Context) error {
 		if n == 0 {
 			continue
 		}
-		report, ok := r.Parser.Parse(buf[:n])
-		if !ok {
-			continue
+		if r.OnRawReport != nil {
+			r.OnRawReport(buf[:n])
 		}
-		r.OnReport(report)
+		if r.OnReport != nil {
+			report, ok := r.Parser.Parse(buf[:n])
+			if !ok {
+				continue
+			}
+			r.OnReport(report)
+		}
 	}
 }

@@ -1,22 +1,23 @@
 # iidx-scratch-bridge sample config.
 #
 # Copy this file to config.toml and edit values to match your hardware.
-# Use the --dump flag once to inspect raw HID reports and find the
-# correct byte offsets for your controller variant.
+# Use `scratch-bridge.exe --list` to find your VID/PID, then
+# `--dump` to confirm the byte offsets if you have a different unit.
 
 [device]
-# Konami IIDX entry model (BeatStream/INFINITAS controller). Change
-# these to match `lsusb`/Device Manager output for your unit.
+# Konami IIDX entry model. Verified values for one production unit:
+#   VID 0x1ccf  PID 0x1018  (joystick HID interface)
+# If --list reports a different PID for your unit, update it here.
 vid = 0x1ccf
-pid = 0x8048
+pid = 0x1018
 
 # Byte offset of the scratch wheel position inside the Input Report.
-# Discover with `scratch-bridge --dump` and rotate the wheel slowly to
-# see which byte changes.
-scratch_axis_byte_index = 5
+# 0 = the very first byte. Use --dump to verify if your firmware
+# revision differs.
+scratch_axis_byte_index = 0
 
 # Half-open [start, end) range of bytes holding the button bitmap.
-# Max width is 2 bytes (16 buttons).
+# [2, 4) means bytes 2 and 3 — that gives 16 bits (b0..b15).
 buttons_byte_range = [2, 4]
 
 # Optional. Set to a non-zero value if your device uses HID Report IDs
@@ -30,7 +31,10 @@ report_id = 0
 threshold = 2
 
 # Length of each scratch pulse, in milliseconds. Stock PS2 controllers
-# fire an ~133 ms one-shot per wheel motion; matches IIDX 14 GOLD timing.
+# fire an ~133 ms one-shot per wheel motion; matches IIDX 14 GOLD
+# timing. While the wheel keeps moving in one direction, the key is
+# released and re-pressed every `pulse_duration_ms` so 連皿 charts
+# register as multiple hits instead of one stuck key.
 pulse_duration_ms = 133
 
 # Keys sent for the two scratch directions. Set these in PCSX2 as IIDX
@@ -40,17 +44,18 @@ down_key = "DOWN"
 
 [buttons]
 # Bit position inside the bitmap -> key name.
-# Adjust the bit-to-button mapping for your hardware after using --dump.
+# Verified bit layout for the same entry model: 1鍵..7鍵 live on
+# bits 0..6 of byte 2, START/SELECT on bits 0/1 of byte 3 (= bits 8/9
+# in the 16-bit map).
 # Names accepted: A-Z, 0-9, F1-F24, plus ENTER/BACKSPACE/SPACE/TAB/
 # ESC/SHIFT/CTRL/ALT/UP/DOWN/LEFT/RIGHT/HOME/END/PAGEUP/PAGEDOWN/
 # INSERT/DELETE.
-b0 = "Z"        # 1鍵
-b1 = "S"        # 2鍵
-b2 = "X"        # 3鍵
-b3 = "D"        # 4鍵
-b4 = "C"        # 5鍵
-b5 = "F"        # 6鍵
-b6 = "V"        # 7鍵
-b7 = "ENTER"     # START
-b8 = "BACKSPACE" # SELECT
-# b9-b15 are free for E1/E2/etc. if your unit exposes them.
+b0 = "Z"          # 1鍵
+b1 = "S"          # 2鍵
+b2 = "X"          # 3鍵
+b3 = "D"          # 4鍵
+b4 = "C"          # 5鍵
+b5 = "F"          # 6鍵
+b6 = "V"          # 7鍵
+b8 = "ENTER"      # START
+b9 = "BACKSPACE"  # SELECT

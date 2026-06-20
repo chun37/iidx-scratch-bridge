@@ -143,6 +143,51 @@ func TestSupersededTimerDoesNotRelease(t *testing.T) {
 	}
 }
 
+func TestContinuousRotationRepressesAfterDuration(t *testing.T) {
+	// 30 ms duration. We feed Rotate(Up) every 12 ms for 144 ms, mimicking
+	// 連皿: same-direction motion that should yield multiple keydown
+	// events instead of one stuck key.
+	p, r := newRig(t, 30*time.Millisecond)
+
+	const tick = 12 * time.Millisecond
+	const total = 144 * time.Millisecond
+	deadline := time.Now().Add(total)
+	for time.Now().Before(deadline) {
+		p.Rotate(rotation.DirUp)
+		time.Sleep(tick)
+	}
+
+	events := r.snapshot()
+	presses := 0
+	for _, e := range events {
+		if e.vk == upVK && e.down {
+			presses++
+		}
+	}
+	// With 30 ms duration spread over 144 ms of continuous input, we
+	// expect at least 3 distinct presses (the first one + at least two
+	// re-presses). Anything less means the keydown is stuck.
+	if presses < 3 {
+		t.Fatalf("continuous rotation should produce >=3 presses, got %d (events=%v)", presses, events)
+	}
+}
+
+func TestShortRotationDoesNotRepress(t *testing.T) {
+	// One quick burst of same-direction taps shorter than duration must
+	// stay as a single press to keep one-shot wheel motions clean.
+	p, r := newRig(t, 100*time.Millisecond)
+	p.Rotate(rotation.DirUp)
+	time.Sleep(20 * time.Millisecond)
+	p.Rotate(rotation.DirUp)
+	time.Sleep(20 * time.Millisecond)
+	p.Rotate(rotation.DirUp)
+
+	events := r.snapshot()
+	if len(events) != 1 || events[0] != (event{upVK, true}) {
+		t.Fatalf("burst within duration should be a single press, got %v", events)
+	}
+}
+
 func TestCloseReleasesHeldKey(t *testing.T) {
 	p, r := newRig(t, time.Second)
 	p.Rotate(rotation.DirUp)
